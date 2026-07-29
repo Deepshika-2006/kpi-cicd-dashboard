@@ -1,0 +1,158 @@
+"""
+store_metrics.py
+
+Store GitHub Actions KPI metrics into SQLite database.
+"""
+
+import sqlite3
+import os
+
+from fetch_metrics import extract_metrics
+
+# ==========================================
+# Database Configuration
+# ==========================================
+
+DB_FOLDER = "database"
+DB_NAME = "metrics.db"
+DB_PATH = os.path.join(DB_FOLDER, DB_NAME)
+
+
+def create_database():
+    """
+    Create database and workflow_metrics table.
+    """
+
+    os.makedirs(DB_FOLDER, exist_ok=True)
+
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS workflow_metrics (
+
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+            workflow_name TEXT,
+
+            run_number INTEGER,
+
+            status TEXT,
+
+            conclusion TEXT,
+
+            branch TEXT,
+
+            event TEXT,
+
+            actor TEXT,
+
+            commit_sha TEXT UNIQUE,
+
+            created_at TEXT,
+
+            updated_at TEXT
+
+        )
+    """)
+
+    conn.commit()
+    conn.close()
+
+
+def store_metrics(metrics):
+    """
+    Store workflow metrics into SQLite.
+    """
+
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    inserted = 0
+
+    for metric in metrics:
+
+        try:
+
+            cursor.execute("""
+                INSERT INTO workflow_metrics(
+
+                    workflow_name,
+                    run_number,
+                    status,
+                    conclusion,
+                    branch,
+                    event,
+                    actor,
+                    commit_sha,
+                    created_at,
+                    updated_at
+
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+
+                metric["workflow_name"],
+                metric["run_number"],
+                metric["status"],
+                metric["conclusion"],
+                metric["branch"],
+                metric["event"],
+                metric["actor"],
+                metric["commit_sha"],
+                metric["created_at"],
+                metric["updated_at"]
+
+            ))
+
+            inserted += 1
+
+        except sqlite3.IntegrityError:
+            # Ignore duplicate commit_sha
+            pass
+
+    conn.commit()
+    conn.close()
+
+    print(f"\n✅ {inserted} new workflow(s) stored successfully.")
+
+
+def show_database():
+
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            workflow_name,
+            run_number,
+            conclusion,
+            branch,
+            created_at
+        FROM workflow_metrics
+        ORDER BY id DESC
+    """)
+
+    rows = cursor.fetchall()
+
+    print("\n")
+    print("=" * 70)
+    print("DATABASE RECORDS")
+    print("=" * 70)
+
+    for row in rows:
+
+        print(row)
+
+    conn.close()
+
+
+if __name__ == "__main__":
+
+    create_database()
+
+    metrics = extract_metrics()
+
+    store_metrics(metrics)
+
+    show_database()
