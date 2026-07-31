@@ -80,6 +80,7 @@ df["workflow_name"] = df["workflow_name"].replace({
     ".github/workflows/kpi-dashboard.yml": "CI Pipeline"
 })
 
+
 if df.empty:
     st.warning("No workflow data found.")
     st.stop()
