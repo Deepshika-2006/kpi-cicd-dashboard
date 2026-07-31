@@ -55,3 +55,14 @@ jobs:
       - name: Type Checking
         run: |
           mypy actionscicd || true
+
+
+
+
+
+
+
+
+
+- name: Intentional Failure
+  run: exit 1
