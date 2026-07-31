@@ -9,13 +9,13 @@ from collector.store_metrics import sync_database
 # ------------------------------------------------
 # Database Path
 # ------------------------------------------------
-
+# Rename old workflow names to the current display name
 BASE_DIR = Path(__file__).resolve().parent.parent
 DB_PATH = BASE_DIR / "database" / "metrics.db"
-
-
 def load_data():
-
+# Rename old workflow names to the current display name
+    # Rename old workflow names to the current display name
+    
     conn = sqlite3.connect(str(DB_PATH))
 
     query = """
@@ -75,6 +75,10 @@ if st.button("🔄 Refresh & Sync"):
 # ------------------------------------------------
 
 df = load_data()
+df["workflow_name"] = df["workflow_name"].replace({
+    ".github/workflows/ci.yml": "CI Pipeline",
+    ".github/workflows/kpi-dashboard.yml": "CI Pipeline"
+})
 
 if df.empty:
     st.warning("No workflow data found.")

@@ -8,7 +8,8 @@ from datetime import datetime
 from collector.github_api import get_workflow_runs
 
 ALLOWED_WORKFLOWS = [
-    "CI Pipeline"
+    "CI Pipeline",
+    # ".github/workflows/ci.yml"
 ]
 
 
@@ -75,7 +76,3 @@ def extract_metrics():
         metrics.append(metric)
 
     return metrics
-
-
-print("Starting")
-THIS WILL FAIL
