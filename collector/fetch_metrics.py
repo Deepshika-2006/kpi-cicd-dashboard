@@ -75,3 +75,7 @@ def extract_metrics():
         metrics.append(metric)
 
     return metrics
+
+
+print("Starting")
+THIS WILL FAIL

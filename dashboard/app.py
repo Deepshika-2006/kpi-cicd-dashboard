@@ -14,7 +14,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 DB_PATH = BASE_DIR / "database" / "metrics.db"
 
 
-@st.cache_data
 def load_data():
 
     conn = sqlite3.connect(str(DB_PATH))
