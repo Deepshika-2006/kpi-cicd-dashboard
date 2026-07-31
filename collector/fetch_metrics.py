@@ -32,6 +32,10 @@ def calculate_duration(created_at, updated_at):
 
 
 def extract_metrics():
+    """
+    Fetch workflow runs from GitHub and
+    return KPI metrics.
+    """
 
     data = get_workflow_runs()
 
@@ -54,6 +58,7 @@ def extract_metrics():
 
         metric = {
 
+            "run_id": run.get("id"),
             "workflow_name": run.get("name"),
             "run_number": run.get("run_number"),
             "status": run.get("status"),

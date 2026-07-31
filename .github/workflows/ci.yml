@@ -56,13 +56,3 @@ jobs:
         run: |
           mypy actionscicd || true
 
-
-
-
-
-
-
-
-
-- name: Intentional Failure
-  run: exit 1

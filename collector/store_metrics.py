@@ -6,8 +6,8 @@ Fetch GitHub workflow metrics and store them into SQLite.
 
 import os
 import sqlite3
-from collector.fetch_metrics import extract_metrics
 
+from collector.fetch_metrics import extract_metrics
 
 DB_FOLDER = "database"
 DB_NAME = "metrics.db"
@@ -15,7 +15,9 @@ DB_PATH = os.path.join(DB_FOLDER, DB_NAME)
 
 
 def create_database():
-    """Create the SQLite database and table."""
+    """
+    Create SQLite database and workflow_metrics table.
+    """
 
     os.makedirs(DB_FOLDER, exist_ok=True)
 
@@ -25,6 +27,7 @@ def create_database():
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS workflow_metrics(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        run_id INTEGER UNIQUE,
         workflow_name TEXT,
         run_number INTEGER,
         status TEXT,
@@ -32,7 +35,7 @@ def create_database():
         branch TEXT,
         event TEXT,
         actor TEXT,
-        commit_sha TEXT UNIQUE,
+        commit_sha TEXT,
         created_at TEXT,
         updated_at TEXT,
         duration INTEGER
@@ -44,7 +47,9 @@ def create_database():
 
 
 def store_metrics(metrics):
-    """Store workflow metrics into SQLite."""
+    """
+    Store workflow metrics into SQLite.
+    """
 
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
@@ -57,6 +62,7 @@ def store_metrics(metrics):
 
             cursor.execute("""
             INSERT INTO workflow_metrics(
+                run_id,
                 workflow_name,
                 run_number,
                 status,
@@ -69,8 +75,9 @@ def store_metrics(metrics):
                 updated_at,
                 duration
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
+                metric["run_id"],
                 metric["workflow_name"],
                 metric["run_number"],
                 metric["status"],
@@ -97,7 +104,9 @@ def store_metrics(metrics):
 
 
 def show_database():
-    """Display stored records."""
+    """
+    Display stored records.
+    """
 
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
@@ -112,7 +121,7 @@ def show_database():
         branch,
         created_at
     FROM workflow_metrics
-    ORDER BY id DESC
+    ORDER BY created_at DESC
     """)
 
     rows = cursor.fetchall()
@@ -130,7 +139,7 @@ def show_database():
 
 def sync_database():
     """
-    Fetch latest GitHub Actions workflow runs
+    Fetch latest GitHub workflow runs
     and store them into SQLite.
     """
 
