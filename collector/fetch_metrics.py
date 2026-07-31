@@ -46,7 +46,11 @@ def extract_metrics():
 
     workflow_runs = [
     run for run in workflow_runs
-    if run.get("name") in ALLOWED_WORKFLOWS
+    if run.get("name") == "CI Pipeline"
+    or (
+        run.get("name") == ".github/workflows/ci.yml"
+        and run.get("conclusion") == "failure"
+    )
 ]
 
     metrics = []

@@ -56,7 +56,3 @@ jobs:
         run: |
           mypy actionscicd || true
 
-
-
-          - name: Demo Failure
-  run: exit 1
