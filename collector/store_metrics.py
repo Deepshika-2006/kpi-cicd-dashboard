@@ -1,22 +1,21 @@
 """
 store_metrics.py
 
-Store GitHub Actions KPI metrics into SQLite database.
+Fetch GitHub workflow metrics and store them into SQLite.
 """
 
 import os
 import sqlite3
+from collector.fetch_metrics import extract_metrics
 
-from fetch_metrics import extract_metrics
 
-# Database configuration
 DB_FOLDER = "database"
 DB_NAME = "metrics.db"
 DB_PATH = os.path.join(DB_FOLDER, DB_NAME)
 
 
 def create_database():
-    """Create the SQLite database and table if they don't exist."""
+    """Create the SQLite database and table."""
 
     os.makedirs(DB_FOLDER, exist_ok=True)
 
@@ -24,7 +23,7 @@ def create_database():
     cursor = conn.cursor()
 
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS workflow_metrics (
+    CREATE TABLE IF NOT EXISTS workflow_metrics(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         workflow_name TEXT,
         run_number INTEGER,
@@ -35,7 +34,8 @@ def create_database():
         actor TEXT,
         commit_sha TEXT UNIQUE,
         created_at TEXT,
-        updated_at TEXT
+        updated_at TEXT,
+        duration INTEGER
     )
     """)
 
@@ -44,7 +44,7 @@ def create_database():
 
 
 def store_metrics(metrics):
-    """Insert workflow metrics into the database."""
+    """Store workflow metrics into SQLite."""
 
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
@@ -52,9 +52,11 @@ def store_metrics(metrics):
     inserted = 0
 
     for metric in metrics:
+
         try:
+
             cursor.execute("""
-            INSERT INTO workflow_metrics (
+            INSERT INTO workflow_metrics(
                 workflow_name,
                 run_number,
                 status,
@@ -64,9 +66,10 @@ def store_metrics(metrics):
                 actor,
                 commit_sha,
                 created_at,
-                updated_at
+                updated_at,
+                duration
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 metric["workflow_name"],
                 metric["run_number"],
@@ -77,23 +80,24 @@ def store_metrics(metrics):
                 metric["actor"],
                 metric["commit_sha"],
                 metric["created_at"],
-                metric["updated_at"]
+                metric["updated_at"],
+                metric["duration"]
             ))
 
             inserted += 1
 
         except sqlite3.IntegrityError:
-            # Ignore duplicate commit SHA
+            # Skip duplicate workflow runs
             pass
 
     conn.commit()
     conn.close()
 
-    print(f"✅ {inserted} new workflow(s) stored successfully.")
+    return inserted
 
 
 def show_database():
-    """Display all records stored in the database."""
+    """Display stored records."""
 
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
@@ -102,7 +106,9 @@ def show_database():
     SELECT
         workflow_name,
         run_number,
+        status,
         conclusion,
+        duration,
         branch,
         created_at
     FROM workflow_metrics
@@ -111,8 +117,10 @@ def show_database():
 
     rows = cursor.fetchall()
 
-    print("\nStored Records:")
-    print("-" * 70)
+    print("\n")
+    print("=" * 80)
+    print("DATABASE RECORDS")
+    print("=" * 80)
 
     for row in rows:
         print(row)
@@ -120,11 +128,25 @@ def show_database():
     conn.close()
 
 
-if __name__ == "__main__":
+def sync_database():
+    """
+    Fetch latest GitHub Actions workflow runs
+    and store them into SQLite.
+    """
+
     create_database()
 
     metrics = extract_metrics()
 
-    store_metrics(metrics)
+    inserted = store_metrics(metrics)
+
+    return inserted
+
+
+if __name__ == "__main__":
+
+    inserted = sync_database()
+
+    print(f"\n✅ {inserted} new workflow(s) stored successfully.\n")
 
     show_database()
