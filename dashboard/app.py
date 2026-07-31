@@ -2,15 +2,22 @@ import sqlite3
 import pandas as pd
 import streamlit as st
 import plotly.express as px
+from pathlib import Path
 
 from collector.store_metrics import sync_database
 
-DB_PATH = "database/metrics.db"
+# ------------------------------------------------
+# Database Path
+# ------------------------------------------------
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+DB_PATH = BASE_DIR / "database" / "metrics.db"
 
 
 @st.cache_data
 def load_data():
-    conn = sqlite3.connect(DB_PATH)
+
+    conn = sqlite3.connect(str(DB_PATH))
 
     query = """
     SELECT
@@ -36,6 +43,8 @@ def load_data():
     return df
 
 
+# ------------------------------------------------
+# Streamlit Page Config
 # ------------------------------------------------
 
 st.set_page_config(
@@ -63,6 +72,8 @@ if st.button("🔄 Refresh & Sync"):
     st.rerun()
 
 # ------------------------------------------------
+# Load Data
+# ------------------------------------------------
 
 df = load_data()
 
@@ -71,7 +82,7 @@ if df.empty:
     st.stop()
 
 # ------------------------------------------------
-# Sidebar
+# Sidebar Filters
 # ------------------------------------------------
 
 st.sidebar.header("Filters")
@@ -122,7 +133,12 @@ success_rate = (
     else 0
 )
 
-valid_duration = completed["duration"].dropna()
+# Only successful builds for timing metrics
+successful = completed[
+    completed["conclusion"] == "success"
+]
+
+valid_duration = successful["duration"].dropna()
 
 average_build = (
     round(valid_duration.mean(), 2)
@@ -148,12 +164,12 @@ slowest_build = (
 
 row1 = st.columns(6)
 
-row1[0].metric("📊 Total", total_runs)
-row1[1].metric("✔ Completed", completed_runs)
-row1[2].metric("✅ Success", successful_runs)
-row1[3].metric("❌ Failed", failed_runs)
-row1[4].metric("🟡 Running", running_runs)
-row1[5].metric("📈 Success", f"{success_rate:.2f}%")
+row1[0].metric("📊 Total Runs", total_runs)
+row1[1].metric("✔ Completed Runs", completed_runs)
+row1[2].metric("✅ Successful Runs", successful_runs)
+row1[3].metric("❌ Failed Runs", failed_runs)
+row1[4].metric("🟡 Running Runs", running_runs)
+row1[5].metric("📈 Success Rate", f"{success_rate:.2f}%")
 
 st.markdown("")
 
@@ -161,7 +177,7 @@ row2 = st.columns(3)
 
 row2[0].metric(
     "⏱ Avg Build Time",
-    f"{average_build} sec"
+    f"{average_build:.2f} sec"
 )
 
 row2[1].metric(
@@ -199,7 +215,7 @@ with left:
 
     st.plotly_chart(
         pie,
-        width="stretch"
+        use_container_width=True
     )
 
 with right:
@@ -220,7 +236,7 @@ with right:
 
     st.plotly_chart(
         bar,
-        width="stretch"
+        use_container_width=True
     )
 
 # ------------------------------------------------
@@ -229,7 +245,7 @@ with right:
 
 st.markdown("---")
 
-completed_chart = completed.copy()
+completed_chart = successful.copy()
 
 completed_chart["Run"] = completed_chart["run_number"].astype(str)
 
@@ -238,7 +254,7 @@ duration_chart = px.line(
     x="Run",
     y="duration",
     markers=True,
-    title="Build Duration per Run",
+    title="Build Duration per Successful Run",
     labels={
         "duration": "Seconds",
         "Run": "Run Number"
@@ -247,7 +263,7 @@ duration_chart = px.line(
 
 st.plotly_chart(
     duration_chart,
-    width="stretch"
+    use_container_width=True
 )
 
 # ------------------------------------------------
@@ -280,6 +296,6 @@ st.subheader("📋 Workflow History")
 
 st.dataframe(
     display_df,
-    width="stretch",
+    use_container_width=True,
     hide_index=True
 )

@@ -8,8 +8,7 @@ from datetime import datetime
 from collector.github_api import get_workflow_runs
 
 ALLOWED_WORKFLOWS = [
-    "CI Pipeline",
-    "KPI Dashboard"
+    "CI Pipeline"
 ]
 
 
@@ -45,9 +44,13 @@ def extract_metrics():
     workflow_runs = data.get("workflow_runs", [])
 
     workflow_runs = [
-        run for run in workflow_runs
-        if run.get("name") in ALLOWED_WORKFLOWS
+    run for run in workflow_runs
+    if run.get("name") in [
+        "CI Pipeline",
+        ".github/workflows/ci.yml",
+        ".github/workflows/kpi-dashboard.yml"
     ]
+]
 
     metrics = []
 

@@ -77,45 +77,24 @@ def get_workflow_runs():
 # ==========================================
 
 def display_workflow_runs(data):
-    """
-    Display basic workflow information.
-    """
 
     if not data:
         print("No data received.")
         return
 
-    print("\n========== GitHub Actions ==========\n")
-
-    print(f"Total Workflow Runs : {data['total_count']}")
-
     workflow_runs = data.get("workflow_runs", [])
 
-    if not workflow_runs:
-        print("\nNo workflow runs found.")
-        return
+    print(f"\nTotal Runs Returned: {len(workflow_runs)}\n")
 
-    print("\nRecent Workflow Runs\n")
+    for run in workflow_runs:
 
-    for run in workflow_runs[:5]:
-
-        print("-" * 50)
-
-        print("Workflow :", run.get("name"))
-
-        print("Status   :", run.get("status"))
-
-        print("Result   :", run.get("conclusion"))
-
-        print("Branch   :", run.get("head_branch"))
-
-        print("Event    :", run.get("event"))
-
-        print("Created  :", run.get("created_at"))
-
-        print("Updated  :", run.get("updated_at"))
-
-    print("-" * 50)
+        print("=" * 60)
+        print("ID         :", run.get("id"))
+        print("Workflow   :", run.get("name"))
+        print("Run Number :", run.get("run_number"))
+        print("Status     :", run.get("status"))
+        print("Conclusion :", run.get("conclusion"))
+        print("Commit SHA :", run.get("head_sha"))
 
 
 # ==========================================
